@@ -1,8 +1,6 @@
-#print("hello")
-import pdfplumber
-import pytesseract
+
 from PIL import Image
-import io
+
 import pandas as pd
 def is_float(s):
     try:
@@ -11,27 +9,6 @@ def is_float(s):
     except ValueError:
         return False
 
-def extract_invoice_data(pdf_path):
-    #invoice_data = []
-    with pdfplumber.open(pdf_path) as pdf:
-        for page in pdf.pages:
-            # Extract images from PDF page
-            images = page.images
-            full_text=''
-            for img in images:
-                # Get the image bytes
-                img_bytes = io.BytesIO(img["stream"].get_data())
-                # Open the image using PIL
-                img_pil = Image.open(img_bytes)
-                # Perform OCR on the image to extract text
-                text = pytesseract.image_to_string(img_pil)
-                full_text+=text
-                # Example: Extract invoice number
-                invoice_number = 123
-                # Extract other data fields similarly
-                
-    #print(full_text)
-    return full_text
 
 
 import PyPDF2
@@ -50,11 +27,31 @@ def extract_text_from_pdf(pdf_path):
 def save_text_to_csv(text, csv_path):
     lines = text.split('\n')
     print("Lines",lines)
+    t_index=None
+    s_index=None
+    e_index=None
+    o_index=None
+    for i,line in enumerate(lines):
+        #print(line)
+        if 'TAX' in line:
+            t_index=i
+        if 'ORDER DATE' in line:
+            o_index=i
+
+        if 'SHIP DATE' in line:
+            print("Hiiii")
+            s_index=i
+        
+        if 'For GCC visit http://productsafety.shawinc.com/' in line:
+            e_index=i
+    print(lines[t_index].lstrip())
+    temp=lines[o_index].lstrip().split(' ')
+    date=temp[-1]
+    print(lines[s_index+1:e_index])
     
-    
-    #data = {'date':temp[0],'Invoice_date':Invoice_date,'Invoice_total':Invoice_total,'Invoice Number':I,'Order Number':O,'Customer P/O':C,'items_details':items_list}
-    #df = pd.DataFrame(data)
-    #df.to_csv(csv_path, index=False)
+    data = {'Invoice_date':date,'items_details':lines[s_index+1:e_index]}
+    df = pd.DataFrame(data)
+    df.to_csv(csv_path, index=False)
 pdf_path = 'Shaw.pdf'
 csv_path = 'Shaw.csv'
 
